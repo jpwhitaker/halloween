@@ -1,59 +1,84 @@
 "use client";
+import {useRef, useEffect} from 'react'
+import { Vector3, AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc, LessEqualStencilFunc } from 'three'
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { PresentationControls, Stars } from "@react-three/drei";
-import { useControls, Leva, useCreateStore } from "leva";
-import Sun from './Sun'
-import { MoonSphere } from "./MoonSphere";
+import { PresentationControls, Stars, Box, Plane, OrbitControls } from "@react-three/drei";
+import noiseShader from './NoiseShader'
 import './styles.css';
-import { useState, useEffect } from "react";
-import UIOverlay from './UIOverlay'
-
-
 export default function Moon() {
-  const store = useCreateStore();
-  //default moon phase
-  const [moonPhase, setMoonPhase] = useState(5);
-  const { ambientIntensity, cameraX, cameraY, cameraZ, cameraFov } = useControls('Scene', {
-    ambientIntensity: { value: 0.2, min: 0, max: 1, step: 0.01 },
-    cameraX: { value: 0, min: -10, max: 10, step: 0.1 },
-    cameraY: { value: 0, min: -10, max: 10, step: 0.1 },
-    cameraZ: { value: 10, min: 0, max: 50, step: 0.1 },
-    cameraFov: { value: 10, min: 0, max: 50, step: 1 },
-  }, { store });
+
 
   return (
     <div id="canvas-container" className="h-full text-white">
-      <Leva store={store} collapsed hidden />
-      <UIOverlay moonPhase={moonPhase} setMoonPhase={setMoonPhase}/>
-      <Canvas camera={{ position: [cameraX, cameraY, cameraZ], fov: cameraFov }}>
-        <CameraUpdater cameraX={cameraX} cameraY={cameraY} cameraZ={cameraZ} cameraFov={cameraFov} />
-        <ambientLight intensity={ambientIntensity} />
-        <PresentationControls
-          global={true}
-          snap={true}
-          polar={[-Infinity, Infinity]}
-        >
-        <Stars radius={100} depth={150} count={5000} factor={4} saturation={0} speed={0.01} />
-        <MoonSphere />
-        <Sun store={store} hawaiianMoonPhase={moonPhase} />
-        </PresentationControls>
-        
-      </Canvas>
       
+
+      <Canvas >
+        <Scene/>
+
+      </Canvas>
+
     </div>
   );
 };
 
 
 
-const CameraUpdater = ({ cameraX, cameraY, cameraZ, cameraFov }) => {
-  const { camera } = useThree();
+const Scene = () => {
+  const stencilRef = 1
+  const shaderRef = useRef();
+  const { size } = useThree();
 
   useEffect(() => {
-    camera.position.set(cameraX, cameraY, cameraZ);
-    camera.fov = cameraFov;
-    camera.updateProjectionMatrix();
-  }, [camera, cameraX, cameraY, cameraZ, cameraFov]);
+    console.log(shaderRef.current);
+    debugger
+    if (shaderRef.current.uniforms.iResolution) {
+        // debugger
+        console.log("useEff")
+        shaderRef.current.uniforms.iResolution.value.set(size.width, size.height, 1);
+    }
+}, [size]);
 
-  return null;
+useFrame(({ clock }) => {
+  if (shaderRef.current.uniforms.iTime) {
+    // debugger
+      shaderRef.current.uniforms.iTime.value = clock.getElapsedTime();
+  }
+});
+
+return (
+  <>
+    
+
+    
+      <OrbitControls />
+
+      <ambientLight intensity={2} />
+      <mesh
+        receiveShadow
+        position-y={-1}
+        rotation-x={-Math.PI * 0.5}
+        scale={100}
+      >
+        <planeGeometry />
+        <meshStandardMaterial color="greenyellow" />
+      </mesh>
+
+    <Plane args={[2, 2]}>
+      {/* <meshPhongMaterial
+        depthWrite={false}
+        stencilWrite={true}
+        stencilRef={stencilRef}
+        stencilFunc={AlwaysStencilFunc}
+        stencilZPass={ReplaceStencilOp}
+      /> */}
+      <shaderMaterial ref={shaderRef} args={[noiseShader]} />
+    </Plane>
+    <Box position={[0, 0, -1]}>
+      <meshPhongMaterial color="red" stencilWrite={true} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
+    </Box>
+
+    
+
+  </>
+);
 };
