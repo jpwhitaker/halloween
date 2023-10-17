@@ -1,53 +1,28 @@
 "use client";
-import {useRef, useEffect} from 'react'
-import { Vector3, AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc, LessEqualStencilFunc } from 'three'
+import { useRef, useEffect, useMemo } from 'react'
+import { Vector3, AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc, LessEqualStencilFunc, AdditiveBlending, PlaneGeometry } from 'three'
 import { Canvas, useThree, useFrame, extend } from "@react-three/fiber";
 import { PresentationControls, Stars, Box, Plane, OrbitControls } from "@react-three/drei";
+import { createNoise2D } from 'simplex-noise';
+
 import NoiseShader from './NoiseShader'
 import './styles.css';
 export default function Moon() {
-extend({ NoiseShader })
-
+  extend({ NoiseShader })
 
   return (
     <div id="canvas-container" className="h-full text-white">
-      
-
       <Canvas >
-        <Scene/>
-
+        <Scene />
       </Canvas>
-
     </div>
   );
 };
 
-
-
 const Scene = () => {
-  const stencilRef = 1
-  const shaderRef = useRef();
-  const { size } = useThree();
 
-  useEffect(() => {
-    // console.log(shaderRef.current);
-    // debugger
-    // if (shaderRef.current.uniforms.iResolution) {
-    //     // debugger
-    //     console.log("useEff")
-    //     shaderRef.current.uniforms.iResolution.value.set(size.width, size.height, 1);
-    // }
-}, [size]);
-
-useFrame(({ clock }) => {
-  // if (shaderRef.current.uniforms.iTime) {
-  //   // debugger
-  //     shaderRef.current.uniforms.iTime.value = clock.getElapsedTime();
-  // }
-});
-
-return (
-  <>
+  return (
+    <>
       <OrbitControls />
 
       <ambientLight intensity={2} />
@@ -60,10 +35,49 @@ return (
         <planeGeometry />
         <meshStandardMaterial color="greenyellow" />
       </mesh>
+      <NoisePlane />
 
-    <Plane args={[2, 2]}>
-      <noiseShader  />
-    </Plane>
-  </>
-);
+      {/* <Plane args={[2, 2]}>
+        <noiseShader blending={AdditiveBlending} />
+      </Plane> */}
+    </>
+  );
 };
+
+
+function NoisePlane() {
+  const meshRef = useRef();
+
+  const [widthSegments, heightSegments] = [100, 100];
+
+  const vertices = useMemo(() => {
+    const geometry = new PlaneGeometry(10, 10, widthSegments, heightSegments);
+    // debugger
+    const simplex = createNoise2D();
+    const threshold = 0.5;
+    // debugger
+    const positions = geometry.attributes.position.array;
+
+    for (let i = 0; i < positions.length; i += 3) {
+      const x = positions[i];
+      const y = positions[i + 1];
+      const z = positions[i + 2];
+    
+      const noiseValue = simplex(x, y);
+      console.log(noiseValue);
+    
+      // If you're trying to modify the z value based on the noise:
+      positions[i + 2] = noiseValue > threshold ? 0.5 : 0;
+    }
+
+    geometry.computeVertexNormals();
+
+    return geometry;
+  }, [widthSegments, heightSegments]);
+
+  return (
+    <mesh ref={meshRef} geometry={vertices}>
+      <meshBasicMaterial color={0x00ff00} wireframe />
+    </mesh>
+  );
+}

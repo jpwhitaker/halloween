@@ -59,11 +59,10 @@ const NoiseShader = shaderMaterial(
       return 2.3 * n_xy;
     }
     
-    void main()
-    {
-        // pattern 47
-        float strength = step( 0.2,cnoise(vUv * 10.0));
-        gl_FragColor = vec4(strength, strength, strength, 1.0);
+    void main() {
+      float strength = step(0.2, cnoise(vUv * 10.0));
+      float alpha = step(0.1, strength); // 1 for white-ish regions, 0 otherwise
+      gl_FragColor = vec4(strength, strength, strength, alpha);
     }
     `
 );
