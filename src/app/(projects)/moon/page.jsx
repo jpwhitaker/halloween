@@ -26,7 +26,7 @@ const Scene = () => {
       <OrbitControls />
 
       <ambientLight intensity={2} />
-      <mesh
+      {/* <mesh
         receiveShadow
         position-y={-1}
         rotation-x={-Math.PI * 0.5}
@@ -34,7 +34,7 @@ const Scene = () => {
       >
         <planeGeometry />
         <meshStandardMaterial color="greenyellow" />
-      </mesh>
+      </mesh> */}
       <NoisePlane />
 
       {/* <Plane args={[2, 2]}>
@@ -47,15 +47,12 @@ const Scene = () => {
 
 function NoisePlane() {
   const meshRef = useRef();
-
   const [widthSegments, heightSegments] = [100, 100];
 
   const vertices = useMemo(() => {
     const geometry = new PlaneGeometry(10, 10, widthSegments, heightSegments);
-    // debugger
     const simplex = createNoise2D();
     const threshold = 0.5;
-    // debugger
     const positions = geometry.attributes.position.array;
 
     for (let i = 0; i < positions.length; i += 3) {
@@ -66,7 +63,6 @@ function NoisePlane() {
       const noiseValue = simplex(x, y);
       console.log(noiseValue);
     
-      // If you're trying to modify the z value based on the noise:
       positions[i + 2] = noiseValue > threshold ? 0.5 : 0;
     }
 
