@@ -1,11 +1,12 @@
 "use client";
 import {useRef, useEffect} from 'react'
 import { Vector3, AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc, LessEqualStencilFunc } from 'three'
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas, useThree, useFrame, extend } from "@react-three/fiber";
 import { PresentationControls, Stars, Box, Plane, OrbitControls } from "@react-three/drei";
-import noiseShader from './NoiseShader'
+import NoiseShader from './NoiseShader'
 import './styles.css';
 export default function Moon() {
+extend({ NoiseShader })
 
 
   return (
@@ -29,27 +30,24 @@ const Scene = () => {
   const { size } = useThree();
 
   useEffect(() => {
-    console.log(shaderRef.current);
-    debugger
-    if (shaderRef.current.uniforms.iResolution) {
-        // debugger
-        console.log("useEff")
-        shaderRef.current.uniforms.iResolution.value.set(size.width, size.height, 1);
-    }
+    // console.log(shaderRef.current);
+    // debugger
+    // if (shaderRef.current.uniforms.iResolution) {
+    //     // debugger
+    //     console.log("useEff")
+    //     shaderRef.current.uniforms.iResolution.value.set(size.width, size.height, 1);
+    // }
 }, [size]);
 
 useFrame(({ clock }) => {
-  if (shaderRef.current.uniforms.iTime) {
-    // debugger
-      shaderRef.current.uniforms.iTime.value = clock.getElapsedTime();
-  }
+  // if (shaderRef.current.uniforms.iTime) {
+  //   // debugger
+  //     shaderRef.current.uniforms.iTime.value = clock.getElapsedTime();
+  // }
 });
 
 return (
   <>
-    
-
-    
       <OrbitControls />
 
       <ambientLight intensity={2} />
@@ -64,21 +62,8 @@ return (
       </mesh>
 
     <Plane args={[2, 2]}>
-      {/* <meshPhongMaterial
-        depthWrite={false}
-        stencilWrite={true}
-        stencilRef={stencilRef}
-        stencilFunc={AlwaysStencilFunc}
-        stencilZPass={ReplaceStencilOp}
-      /> */}
-      <shaderMaterial ref={shaderRef} args={[noiseShader]} />
+      <noiseShader  />
     </Plane>
-    <Box position={[0, 0, -1]}>
-      <meshPhongMaterial color="red" stencilWrite={true} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
-    </Box>
-
-    
-
   </>
 );
 };
