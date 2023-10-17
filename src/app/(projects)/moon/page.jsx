@@ -1,55 +1,28 @@
 "use client";
-import {useRef, useEffect} from 'react'
-import { Vector3, AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc, LessEqualStencilFunc } from 'three'
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { PresentationControls, Stars, Box, Plane, OrbitControls } from "@react-three/drei";
+import { useRef, } from 'react'
+import { AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc, LessDepth } from 'three'
+import { Canvas, useThree, } from "@react-three/fiber";
+import { Box, Plane, OrbitControls, useTexture } from "@react-three/drei";
 import noiseShader from './NoiseShader'
 import './styles.css';
 export default function Moon() {
-
-
   return (
     <div id="canvas-container" className="h-full text-white">
-      
-
       <Canvas >
-        <Scene/>
-
+        <Scene />
       </Canvas>
-
     </div>
   );
 };
-
-
 
 const Scene = () => {
   const stencilRef = 1
   const shaderRef = useRef();
   const { size } = useThree();
+  const alphaTexture = useTexture('./fog.jpg');
 
-  useEffect(() => {
-    console.log(shaderRef.current);
-    debugger
-    if (shaderRef.current.uniforms.iResolution) {
-        // debugger
-        console.log("useEff")
-        shaderRef.current.uniforms.iResolution.value.set(size.width, size.height, 1);
-    }
-}, [size]);
-
-useFrame(({ clock }) => {
-  if (shaderRef.current.uniforms.iTime) {
-    // debugger
-      shaderRef.current.uniforms.iTime.value = clock.getElapsedTime();
-  }
-});
-
-return (
-  <>
-    
-
-    
+  return (
+    <>
       <OrbitControls />
 
       <ambientLight intensity={2} />
@@ -60,25 +33,32 @@ return (
         scale={100}
       >
         <planeGeometry />
-        <meshStandardMaterial color="greenyellow" />
+        <meshPhongMaterial color="greenyellow" stencilWrite={false} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
       </mesh>
 
-    <Plane args={[2, 2]}>
-      {/* <meshPhongMaterial
-        depthWrite={false}
-        stencilWrite={true}
-        stencilRef={stencilRef}
-        stencilFunc={AlwaysStencilFunc}
-        stencilZPass={ReplaceStencilOp}
-      /> */}
-      <shaderMaterial ref={shaderRef} args={[noiseShader]} />
-    </Plane>
-    <Box position={[0, 0, -1]}>
-      <meshPhongMaterial color="red" stencilWrite={true} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
-    </Box>
+      <Plane args={[2, 2]}>
+        <meshPhongMaterial
+          depthWrite={false}
+          stencilWrite={true}
+          stencilRef={stencilRef}
+          stencilFunc={AlwaysStencilFunc}
+          stencilZPass={ReplaceStencilOp}
+        />
+      </Plane>
 
-    
-
-  </>
-);
+      <Plane args={[2, 2]} position={[0, 0, 0.001]}>  {/* A slight Z offset to avoid z-fighting */}
+        <meshPhongMaterial
+          depthWrite={false}
+          alphaMap={alphaTexture}
+          transparent={true}
+          visible={true}
+          depthTest={true}
+          depthFunc={LessDepth} // Ensures it only draws over previous content if it's closer
+        />
+      </Plane>
+      <Box position={[0, 0, -1]}>
+        <meshPhongMaterial color="red" stencilWrite={true} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
+      </Box>
+    </>
+  );
 };
