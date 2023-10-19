@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { AlwaysStencilFunc, ReplaceStencilOp, EqualStencilFunc } from 'three';
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Box, Plane, OrbitControls, Sphere, Float, MeshPortalMaterial, Mask, useMask } from "@react-three/drei";
@@ -30,18 +30,18 @@ const Scene = () => {
       label: "Disable Stencil & Change Color"
     },
     numberOfCircles: {
-      value: 20,
+      value: 200,
       min: 1,
-      max: 20,
+      max: 500,
       step: 1,
       label: "Number of Circles"
     },
-    minX: { value: -0.8, min: -10, max: 10, label: 'Min X Position' },
-    maxX: { value: 2.2, min: -10, max: 10, label: 'Max X Position' },
-    minY: { value: -3, min: -10, max: 10, label: 'Min Y Position' },
-    maxY: { value: 3, min: -10, max: 10, label: 'Max Y Position' },
-    minZ: { value: -0.8, min: -10, max: 10, label: 'Min Y Position' },
-    maxZ: { value: 1.2, min: -10, max: 10, label: 'Max Y Position' }
+    minX: { value: 0.5, min: -10, max: 10, label: 'Min X Position' },
+    maxX: { value: 2, min: -10, max: 10, label: 'Max X Position' },
+    minY: { value: -1, min: -10, max: 10, label: 'Min Y Position' },
+    maxY: { value: 4, min: -10, max: 10, label: 'Max Y Position' },
+    minZ: { value: -2, min: -10, max: 10, label: 'Min Y Position' },
+    maxZ: { value: 2, min: -10, max: 10, label: 'Max Y Position' }
   });
 
   const getRandomPosition = (min, max) => {
@@ -59,31 +59,18 @@ const Scene = () => {
 
       {Array.from({ length: numberOfCircles }).map((_, i) => {
         console.log('my circle')
-        return(
-        
-        <MyCircle
-          key={i}
-          
-          position={[
-            getRandomPosition(minX, maxX),
-            getRandomPosition(minY, maxY),
-            getRandomPosition(minZ, maxZ)
-          ]}
+        return (
+          <RegularDots
+            key={i}
+            position={[
+              getRandomPosition(minX, maxX),
+              getRandomPosition(minY, maxY),
+              getRandomPosition(minZ, maxZ)
+            ]}
+          />
+        )
+      })}
 
-        />
-      )})}
-
-
-{/* <Box args={[1, 1, 1]} >
-          <meshStandardMaterial attach="material" color="red" {...stencil} />
-        </Box> */}
-
-      {/* <Sphere args={[0.7, 20]} position={[0,1,1]}>
-      ＜<MeshPortalMaterial>
-        <ambientLight intensity={0.7} />
-        
-      </MeshPortalMaterial>
-    </Sphere> */}
 
       <Man position-y={-1} stencilWrite={true} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
 
@@ -95,7 +82,7 @@ const Scene = () => {
         scale={100}
       >
         <planeGeometry />
-        <meshStandardMaterial color="greenyellow"  />
+        <meshStandardMaterial color="greenyellow" />
       </mesh>
     </>
   );
@@ -103,27 +90,50 @@ const Scene = () => {
 
 
 
-const MyCircle = ({ isStencilDisabled, stencilRef, position }) => (
-  <Float
-    speed={3} // Animation speed, defaults to 1
-    rotationIntensity={1} // XYZ rotation intensity, defaults to 1
-    floatIntensity={1} // Up/down float intensity, works like a multiplier with floatingRange,defaults to 1
-  // Range of y-axis values the object will float within, defaults to [-0.1,0.1]
-  >
-    <Mask id={1} position={position}>
+const PortalDots = ({ isStencilDisabled, stencilRef, position }) => {
+  
+  return (
+    <Float
+      speed={3} // Animation speed, defaults to 1
+      rotationIntensity={1} // XYZ rotation intensity, defaults to 1
+      floatIntensity={1} // Up/down float intensity, works like a multiplier with floatingRange,defaults to 1
+    // Range of y-axis values the object will float within, defaults to [-0.1,0.1]
+    >
+      <Mask id={1} position={position}>
+        <sphereGeometry args={[0.1, 20]} position={position}>
+          <meshBasicMaterial />
+        </sphereGeometry>
+      </Mask>
+    </Float>
+  );
+}
+
+const RegularDots = ({ position }) => {
+  
+  const meshRef = useRef();
+
+  // Random speed and starting offset for the sphere
+  const { speed, startOffset } = useMemo(() => ({
+    speed: 1 + Math.random() * 10,  // Random speed between 0.5 and 1.5
+    startOffset: 2 * Math.PI * Math.random()  // Random starting offset between 0 and 2*PI
+  }), []);
+
+  useFrame(({ clock }) => {
+    const elapsedTime = clock.getElapsedTime();
+    const x = Math.cos(elapsedTime * speed + startOffset) * position[0];
+    const z = Math.sin(elapsedTime * speed + startOffset) * position[0];
+    if (meshRef.current) {
+      meshRef.current.position.x = x;
+      meshRef.current.position.z = z;
+    }
+  });
+
+  return (
+    <Mask id={1} ref={meshRef} position={position}>
       <sphereGeometry args={[0.1, 20]} position={position}>
         <meshBasicMaterial />
-        {/* <meshPhongMaterial
-        color={isStencilDisabled ? "pink" : ""}
-        depthWrite={isStencilDisabled ? true : false}
-        stencilWrite={!isStencilDisabled}
-        stencilRef={stencilRef}
-        stencilFunc={isStencilDisabled ? null : AlwaysStencilFunc}
-        stencilZPass={isStencilDisabled ? null : ReplaceStencilOp}
-      /> */}
       </sphereGeometry>
     </Mask>
-  </Float>
-);
-
+  );
+}
 
