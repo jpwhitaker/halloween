@@ -6,6 +6,7 @@ import { Box, Plane, OrbitControls, Sphere, Float, MeshPortalMaterial, Mask, use
 import noiseShader from './NoiseShader';
 import { useControls } from 'leva';
 import { Man } from './Man'
+import { Wizard } from './Wizard'
 import './styles.css';
 
 export default function Moon() {
@@ -30,14 +31,14 @@ const Scene = () => {
       label: "Disable Stencil & Change Color"
     },
     numberOfCircles: {
-      value: 200,
+      value: 300,
       min: 1,
       max: 500,
       step: 1,
       label: "Number of Circles"
     },
-    minX: { value: 0.5, min: -10, max: 10, label: 'Min X Position' },
-    maxX: { value: 2, min: -10, max: 10, label: 'Max X Position' },
+    minX: { value: 2.2, min: -10, max: 10, label: 'Min X Position' },
+    maxX: { value: 2.6, min: -10, max: 10, label: 'Max X Position' },
     minY: { value: -1, min: -10, max: 10, label: 'Min Y Position' },
     maxY: { value: 4, min: -10, max: 10, label: 'Max Y Position' },
     minZ: { value: -2, min: -10, max: 10, label: 'Min Y Position' },
@@ -55,7 +56,10 @@ const Scene = () => {
       <OrbitControls />
 
       <ambientLight intensity={2} />
-
+      <Man position-y={-1} />
+      <group scale={2.7} position={[0, -1, 0]}>
+        <Wizard />
+      </group>
 
       {Array.from({ length: numberOfCircles }).map((_, i) => {
         console.log('my circle')
@@ -71,8 +75,15 @@ const Scene = () => {
         )
       })}
 
+      {/* <Mask id={1} colorWrite  position={[0,1,2]}>
+        <sphereGeometry args={[2, 10]} >
+          <meshBasicMaterial />
+        </sphereGeometry>
+      </Mask> */}
 
-      <Man position-y={-1} stencilWrite={true} stencilRef={stencilRef} stencilFunc={EqualStencilFunc} />
+
+
+
 
 
       <mesh
@@ -91,7 +102,7 @@ const Scene = () => {
 
 
 const PortalDots = ({ isStencilDisabled, stencilRef, position }) => {
-  
+
   return (
     <Float
       speed={3} // Animation speed, defaults to 1
@@ -109,12 +120,12 @@ const PortalDots = ({ isStencilDisabled, stencilRef, position }) => {
 }
 
 const RegularDots = ({ position }) => {
-  
+
   const meshRef = useRef();
 
   // Random speed and starting offset for the sphere
   const { speed, startOffset } = useMemo(() => ({
-    speed: 1 + Math.random() * 10,  // Random speed between 0.5 and 1.5
+    speed: 1 + Math.random() - 0.9,  // Random speed between 0.5 and 1.5
     startOffset: 2 * Math.PI * Math.random()  // Random starting offset between 0 and 2*PI
   }), []);
 
@@ -129,8 +140,8 @@ const RegularDots = ({ position }) => {
   });
 
   return (
-    <Mask id={1} ref={meshRef} position={position}>
-      <sphereGeometry args={[0.1, 20]} position={position}>
+    <Mask id={1} ref={meshRef} colorWrite position={position}>
+      <sphereGeometry args={[0.1, 10]} position={position}>
         <meshBasicMaterial />
       </sphereGeometry>
     </Mask>
